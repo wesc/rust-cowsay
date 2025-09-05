@@ -80,7 +80,7 @@ fn make_bubble(s: String, width: usize, think: bool, wrap: bool) -> String {
             let localwidth;
             let mut subindex = index + width;
             'b: loop {
-                match (&s[index..subindex]).ends_with(" ") {
+                match s[index..subindex].ends_with(" ") {
                     true => {
                         localwidth = subindex - index;
                         break 'b;
@@ -104,13 +104,13 @@ fn make_bubble(s: String, width: usize, think: bool, wrap: bool) -> String {
     for (index, line) in result.iter_mut().enumerate() {
         match index {
             0 => match reslen {
-                0 | 1 => *line = vec![cowb.sleft, line, cowb.sright].join(" "),
-                _ => *line = vec![cowb.topleft, line, cowb.topright].join(" "),
+                0 | 1 => *line = [cowb.sleft, line, cowb.sright].join(" "),
+                _ => *line = [cowb.topleft, line, cowb.topright].join(" "),
             },
-            x if x < reslen => *line = vec![cowb.midleft, line, cowb.midright].join(" "),
+            x if x < reslen => *line = [cowb.midleft, line, cowb.midright].join(" "),
             y if y == reslen => match reslen {
-                1 => *line = vec![cowb.sleft, line, cowb.sright].join(" "),
-                _ => *line = vec![cowb.botleft, line, cowb.botright].join(" "),
+                1 => *line = [cowb.sleft, line, cowb.sright].join(" "),
+                _ => *line = [cowb.botleft, line, cowb.botright].join(" "),
             },
             _ => panic!("Whoops!"),
         }
@@ -251,18 +251,15 @@ fn main() {
         )
         .get_matches();
 
-    match matches.get_flag("list") {
-        true => {
-            let list = list_cows();
-            println!("{:?}", list);
-            std::process::exit(0);
-        }
-        false => (),
+    if matches.get_flag("list") {
+        let list = list_cows();
+        println!("{list:?}");
+        std::process::exit(0);
     };
 
     let mut cow = matches
         .get_one::<String>("cow")
-        .map(|s| s.clone())
+        .cloned()
         .unwrap_or_else(|| "default".to_owned());
 
     cow = match matches.get_flag("random") {
@@ -314,7 +311,7 @@ fn main() {
         .unwrap_or("");
     let mut custombool = false;
 
-    if custom != "" {
+    if !custom.is_empty() {
         custombool = true;
     }
 
@@ -355,11 +352,11 @@ fn main() {
         true => {
             let mut f = File::open(&cow).unwrap();
             f.read_to_string(&mut cowbody)
-                .expect(&format!("Couldn't read cowfile {}", cow));
+                .unwrap_or_else(|_| panic!("Couldn't read cowfile {cow}"));
         }
         false => {
             let fmt = &format!("{}.cow", &cow);
-            cowbody = str::from_utf8(&assets::get(&fmt).unwrap())
+            cowbody = str::from_utf8(&assets::get(fmt).unwrap())
                 .unwrap()
                 .to_string();
         }
